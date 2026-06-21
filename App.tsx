@@ -17,6 +17,17 @@ import CommitteeMemberScreen from './src/src/screens/CommitteeMemberScreen';
 import PoojaRegistrationScreen from './src/src/screens/PoojaRegistrationScreen';
 import FestivalDashboardScreen from './src/src/screens/FestivalDashboardScreen';
 import StartScreen from './src/src/screens/StartScreen';
+import FestivalDetailScreen from './src/src/screens/FestivalDetailScreen';
+import MemberContributionScreen from './src/src/screens/MemberContributionScreen';
+import CollectContributionScreen from './src/src/screens/CollectContributionScreen';
+import DonationCollectionScreen from './src/src/screens/DonationCollectionScreen';
+import DonationDashboardScreen from './src/src/screens/DonationDashboardScreen';
+import DonationSchemeDetailScreen from './src/src/screens/DonationSchemeDetailScreen';
+import SchemeAssignmentScreen from './src/src/screens/SchemeAssignmentScreen';
+import AddSchemeScreen from './src/src/screens/AddSchemeScreen';
+import CreateFestivalScreen from './src/src/screens/CreateFestivalScreen';
+import CreateUserScreen from './src/src/screens/CreateUserScreen';
+import HallBookingScreen from './src/src/screens/HallBookingScreen';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -30,7 +41,18 @@ function App() {
       {/* <HomeScreen /> */}
       {/* <CommitteeMemberScreen /> */}
       {/* <PoojaRegistrationScreen /> */}
-      <FestivalDashboardScreen />
+      {/* <FestivalDashboardScreen /> */}
+      {/* <FestivalDetailScreen /> */}
+      {/* <MemberContributionScreen /> */}
+      {/* <CollectContributionScreen /> */}
+      {/* <DonationCollectionScreen /> */}
+      {/* <DonationDashboardScreen /> */}
+      {/* <DonationSchemeDetailScreen /> */}
+      {/* <SchemeAssignmentScreen /> */}
+      {/* <AddSchemeScreen /> */}
+      {/* <CreateFestivalScreen /> */}
+      {/* <CreateUserScreen /> */}
+      <HallBookingScreen />
     </SafeAreaProvider>
   );
 }
