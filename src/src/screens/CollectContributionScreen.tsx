@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import LinearGradient from 'react-native-linear-gradient';
+import { showAlert, showApiError } from '../utils/AlertUtils';
+import { createFestivalContribution } from '../services/service';
 
 const users = [
   { id: 1, name: 'Inish Raj' },
@@ -116,6 +118,25 @@ export default function CollectContributionScreen() {
           : (paid / required) * 100,
     };
   }, [selectedUser, selectedFestival]);
+
+  console.log(selectedUser)
+
+  async function handleCollectContribution() {
+    try {
+      const data = {
+        "user_id": 1,
+        "festival_id": 1,
+        "amount_paid": 500,
+        "payment_status": "pending"
+      }
+      const response = await createFestivalContribution(data);8
+
+      showAlert("Success",'Contribution collected successfully!');
+    } catch (error) {
+      console.error('Error collecting contribution:', error);
+      showApiError(error, 'Contribution Collection Failed!!');
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -330,7 +351,7 @@ export default function CollectContributionScreen() {
             style={styles.remarks}
           />
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleCollectContribution}>
 
             <LinearGradient
               colors={['#F59E47', '#F7B267']}

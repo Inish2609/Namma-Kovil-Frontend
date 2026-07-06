@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,37 +8,33 @@ import {
   ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { createFestival } from '../services/service';
+import { showAlert } from '../utils/AlertUtils';
 
 export default function CreateFestivalScreen() {
   const [festivalName, setFestivalName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [location, setLocation] = useState('');
   const [defaultAmount, setDefaultAmount] = useState('');
 
-  const handleCreate = () => {
-    if (!festivalName) return;
+  const handleCreate = async () => {
+    try {
+      const data = {
+        "festival_name": festivalName,
+        "amount": Number(defaultAmount) || 0,
+        "description": description,
+        "start_date": startDate,
+        "end_date": endDate
+      }
 
-    const newFestival = {
-      id: Date.now(),
-      name: festivalName,
-      description,
-      startDate,
-      endDate,
-      location,
-      defaultAmount: Number(defaultAmount) || 0,
-    };
+      const response = await createFestival(data);
 
-    console.log('Festival Created:', newFestival);
+      showAlert('Success', response.data.message);
+    } catch (err) {
+      showAlert('Error', "Festival Creation Failed!!");
+    }
 
-    // reset fields
-    setFestivalName('');
-    setDescription('');
-    setStartDate('');
-    setEndDate('');
-    setLocation('');
-    setDefaultAmount('');
   };
 
   return (
@@ -99,15 +95,6 @@ export default function CreateFestivalScreen() {
             style={styles.input}
           />
 
-          {/* Location */}
-          <Text style={styles.label}>Location</Text>
-          <TextInput
-            placeholder="Enter location"
-            value={location}
-            onChangeText={setLocation}
-            style={styles.input}
-          />
-
           {/* Default Amount */}
           <Text style={styles.label}>
             Default Contribution Amount
@@ -153,7 +140,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     shadowColor: '#F59E47',
     shadowOpacity: 0.25,
-    shadowOffset: {width: 0, height: 8},
+    shadowOffset: { width: 0, height: 8 },
     shadowRadius: 15,
   },
 
@@ -177,7 +164,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.08,
-    shadowOffset: {width: 0, height: 5},
+    shadowOffset: { width: 0, height: 5 },
     shadowRadius: 12,
   },
 
@@ -208,7 +195,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#F59E47',
     shadowOpacity: 0.3,
-    shadowOffset: {width: 0, height: 6},
+    shadowOffset: { width: 0, height: 6 },
     shadowRadius: 10,
   },
 

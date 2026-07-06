@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   StyleSheet,
@@ -8,8 +8,22 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
+import { handleLogin } from '../services/service';
 
 export default function LoginScreen() {
+
+  const [phoneNumber, setPhoneNumber] = useState('')
+
+  const [password, setPassword] = useState('')
+
+  async function handleSubmit() {
+    try {
+      const response = await handleLogin(phoneNumber, password)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <LinearGradient
       colors={['#FFF8F3', '#FDEFE5', '#FFF5EE']}
@@ -40,15 +54,19 @@ export default function LoginScreen() {
             placeholder="Mobile Number"
             style={styles.input}
             keyboardType="phone-pad"
+            value={phoneNumber ?? ''}
+            onChangeText={(value) => setPhoneNumber(value)}
           />
 
           <TextInput
             placeholder="Password"
             style={styles.input}
             secureTextEntry
+            value={password}
+            onChangeText={(value) => setPassword(value)}
           />
 
-          <TouchableOpacity style={styles.loginButton}>
+          <TouchableOpacity style={styles.loginButton} onPress={() => handleSubmit()}>
             <Text style={styles.loginText}>LOGIN</Text>
           </TouchableOpacity>
 

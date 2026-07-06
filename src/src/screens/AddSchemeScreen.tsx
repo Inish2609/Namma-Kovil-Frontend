@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,28 +8,30 @@ import {
   ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { showAlert, showApiError } from '../utils/AlertUtils';
+import { createScheme } from '../services/service';
 
 export default function AddSchemeScreen() {
   const [schemeName, setSchemeName] = useState('');
   const [description, setDescription] = useState('');
-  const [defaultAmount, setDefaultAmount] = useState('');
+  const [targetAmount, setTargetAmount] = useState('');
 
-  const handleSave = () => {
-    if (!schemeName) return;
+  const handleSave = async () => {
+    try {
 
-    const newScheme = {
-      id: Date.now(),
-      name: schemeName,
-      description,
-      defaultAmount: Number(defaultAmount) || 0,
-    };
+      const data = {
+        "scheme_name": schemeName,
+        "description": description,
+        "target_amount": parseFloat(targetAmount) || 0
+      }
 
-    console.log('New Scheme Created:', newScheme);
+      const response = await createScheme(data);
 
-    // reset
-    setSchemeName('');
-    setDescription('');
-    setDefaultAmount('');
+      showAlert('Success', 'Scheme created successfully!');
+    } catch (error) {
+      console.error('Error creating scheme:', error);
+      showApiError(error, 'Scheme Creation Failed!!');
+    }
   };
 
   return (
@@ -74,13 +76,13 @@ export default function AddSchemeScreen() {
 
           {/* Default Amount */}
           <Text style={styles.label}>
-            Default Amount (Optional)
+            Target Amount
           </Text>
           <TextInput
-            placeholder="Enter amount"
+            placeholder="Enter the Target amount"
             keyboardType="numeric"
-            value={defaultAmount}
-            onChangeText={setDefaultAmount}
+            value={targetAmount}
+            onChangeText={setTargetAmount}
             style={styles.input}
           />
 
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     shadowColor: '#F59E47',
     shadowOpacity: 0.25,
-    shadowOffset: {width: 0, height: 8},
+    shadowOffset: { width: 0, height: 8 },
     shadowRadius: 15,
   },
 
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.08,
-    shadowOffset: {width: 0, height: 5},
+    shadowOffset: { width: 0, height: 5 },
     shadowRadius: 12,
   },
 
@@ -172,7 +174,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#F59E47',
     shadowOpacity: 0.3,
-    shadowOffset: {width: 0, height: 6},
+    shadowOffset: { width: 0, height: 6 },
     shadowRadius: 10,
   },
 

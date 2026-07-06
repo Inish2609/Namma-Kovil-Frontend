@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,26 +8,28 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import {Dropdown} from 'react-native-element-dropdown';
+import { Dropdown } from 'react-native-element-dropdown';
 import LinearGradient from 'react-native-linear-gradient';
+import { createAssignSchemeContribution } from '../services/service';
+import { showAlert } from '../utils/AlertUtils';
 
 const users = [
-  {id: 1, name: 'Inish Raj'},
-  {id: 2, name: 'Kumar'},
-  {id: 3, name: 'Ganesh'},
-  {id: 4, name: 'Arun'},
+  { id: 1, name: 'Inish Raj' },
+  { id: 2, name: 'Kumar' },
+  { id: 3, name: 'Ganesh' },
+  { id: 4, name: 'Arun' },
 ];
 
 const festivals = [
-  {id: 1, name: 'Aadi Festival'},
-  {id: 2, name: 'Panguni Festival'},
-  {id: 3, name: 'Vinayagar Festival'},
+  { id: 1, name: 'Aadi Festival' },
+  { id: 2, name: 'Panguni Festival' },
+  { id: 3, name: 'Vinayagar Festival' },
 ];
 
 // demo storage
 let assignments = [
-  {id: 1, userId: 1, festivalId: 1, amount: 1000},
-  {id: 2, userId: 2, festivalId: 2, amount: 1500},
+  { id: 1, userId: 1, festivalId: 1, amount: 1000 },
+  { id: 2, userId: 2, festivalId: 2, amount: 1500 },
 ];
 
 export default function SchemeAssignmentScreen() {
@@ -45,21 +47,21 @@ export default function SchemeAssignmentScreen() {
     value: f.id,
   }));
 
-  const handleAssign = () => {
-    if (!selectedUser || !selectedFestival || !amount) return;
+  const handleAssign = async () => {
+    try {
+      const data = {
+        "user_id": selectedUser,
+        "donation_scheme_id": selectedFestival,
+        "amount_assigned": Number(amount) ?? 0,
+      }
+      const response = await createAssignSchemeContribution(data)
 
-    const newItem = {
-      id: Date.now(),
-      userId: selectedUser,
-      festivalId: selectedFestival,
-      amount: Number(amount),
-    };
+      showAlert("Success", "Scheme assigned successfully!");
 
-    assignments = [...assignments, newItem];
-
-    setSelectedUser(null);
-    setSelectedFestival(null);
-    setAmount('');
+    } catch (error) {
+      console.error('Error assigning scheme:', error);
+      showAlert("Error", "Scheme assignment failed!");
+    }
   };
 
   const data = useMemo(() => {
@@ -150,7 +152,7 @@ export default function SchemeAssignmentScreen() {
           scrollEnabled={false}
           data={data}
           keyExtractor={item => item.id.toString()}
-          renderItem={({item}) => (
+          renderItem={({ item }) => (
             <View style={styles.card}>
 
               <View style={styles.row}>
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     shadowColor: '#F59E47',
     shadowOpacity: 0.25,
-    shadowOffset: {width: 0, height: 8},
+    shadowOffset: { width: 0, height: 8 },
     shadowRadius: 15,
   },
 
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.08,
-    shadowOffset: {width: 0, height: 5},
+    shadowOffset: { width: 0, height: 5 },
     shadowRadius: 12,
   },
 
@@ -253,7 +255,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#F59E47',
     shadowOpacity: 0.3,
-    shadowOffset: {width: 0, height: 6},
+    shadowOffset: { width: 0, height: 6 },
     shadowRadius: 10,
   },
 

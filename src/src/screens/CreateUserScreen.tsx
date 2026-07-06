@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { showAlert } from '../utils/AlertUtils';
+import { createUser } from '../services/service';
 
 export default function CreateUserScreen() {
   const [name, setName] = useState('');
@@ -15,27 +17,26 @@ export default function CreateUserScreen() {
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Member');
+  const [fatherName, setFatherName] = useState('')
 
-  const handleCreateUser = () => {
-    if (!name) return;
 
-    const newUser = {
-      id: Date.now(),
-      name,
-      phone,
-      address,
-      email,
-      role,
-    };
+  const handleCreateUser = async () => {
+    try {
+      const data = {
+        "name": name,
+        "phone": phone,
+        "father_name": fatherName,
+        "address": address,
+        "email": email,
+        "role": role,
+        "isAdmin": false
+      }
+      const response = await createUser(data)
 
-    console.log('User Created:', newUser);
-
-    // reset fields
-    setName('');
-    setPhone('');
-    setAddress('');
-    setEmail('');
-    setRole('Member');
+      showAlert('Success', response.data.message)
+    } catch (err) {
+      showAlert('Error', "User Creation Failed!!")
+    }
   };
 
   return (
@@ -79,6 +80,14 @@ export default function CreateUserScreen() {
             style={styles.input}
           />
 
+          <Text style={styles.label}>Father Name</Text>
+          <TextInput
+            placeholder="Enter Father Name"
+            value={fatherName}
+            onChangeText={setFatherName}
+            style={styles.input}
+          />
+
           {/* Email */}
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -94,7 +103,9 @@ export default function CreateUserScreen() {
             placeholder="Enter address"
             value={address}
             onChangeText={setAddress}
-            style={styles.input}
+            style={[styles.input, { height: 100 }]}
+            multiline
+            numberOfLines={10}
           />
 
           {/* Role Selector */}
@@ -102,7 +113,7 @@ export default function CreateUserScreen() {
 
           <View style={styles.roleContainer}>
 
-            {['Member', 'Volunteer', 'Admin'].map(item => (
+            {['Member', 'Committee'].map(item => (
               <TouchableOpacity
                 key={item}
                 onPress={() => setRole(item)}
@@ -159,7 +170,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     shadowColor: '#F59E47',
     shadowOpacity: 0.25,
-    shadowOffset: {width: 0, height: 8},
+    shadowOffset: { width: 0, height: 8 },
     shadowRadius: 15,
   },
 
@@ -183,7 +194,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.08,
-    shadowOffset: {width: 0, height: 5},
+    shadowOffset: { width: 0, height: 5 },
     shadowRadius: 12,
   },
 
@@ -244,7 +255,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#F59E47',
     shadowOpacity: 0.3,
-    shadowOffset: {width: 0, height: 6},
+    shadowOffset: { width: 0, height: 6 },
     shadowRadius: 10,
   },
 

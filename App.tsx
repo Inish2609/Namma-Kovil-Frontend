@@ -44,7 +44,7 @@ function App() {
       {/* <FestivalDashboardScreen /> */}
       {/* <FestivalDetailScreen /> */}
       {/* <MemberContributionScreen /> */}
-      {/* <CollectContributionScreen /> */}
+      <CollectContributionScreen />
       {/* <DonationCollectionScreen /> */}
       {/* <DonationDashboardScreen /> */}
       {/* <DonationSchemeDetailScreen /> */}
@@ -52,7 +52,7 @@ function App() {
       {/* <AddSchemeScreen /> */}
       {/* <CreateFestivalScreen /> */}
       {/* <CreateUserScreen /> */}
-      <HallBookingScreen />
+      {/* <HallBookingScreen /> */}
     </SafeAreaProvider>
   );
 }

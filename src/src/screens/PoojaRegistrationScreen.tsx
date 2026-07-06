@@ -9,6 +9,9 @@ import {
     TextInput,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { showAlert } from '../utils/AlertUtils';
+import { createEvent } from '../services/service';
+import { formatDateTime } from '../utils/helper';
 
 const poojas = [
     {
@@ -44,17 +47,64 @@ const slots = [
 export default function PoojaRegistrationScreen() {
     const [selectedPooja, setSelectedPooja] = useState<number | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-    const [selectedDate, setSelectedDate] = useState<number | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [devoteeName, setDevoteeName] = useState<string>('')
+    const [devoteePhoneNumber, setDevoteePhoneNumber] = useState('')
+    const [devoteeAddress, setDevoteeAddress] = useState('')
 
-    const dates = [
-        { day: 'MON', date: '23' },
-        { day: 'TUE', date: '24' },
-        { day: 'WED', date: '25' },
-        { day: 'THU', date: '26' },
-        { day: 'FRI', date: '27' },
-        { day: 'SAT', date: '28' },
-        { day: 'SUN', date: '29' },
-    ];
+
+    const generateDates = (days: number = 30) => {
+        const dates = [];
+
+        for (let i = 0; i < days; i++) {
+            const currentDate = new Date();
+            currentDate.setDate(currentDate.getDate() + i);
+
+            dates.push({
+                day: currentDate
+                    .toLocaleDateString('en-US', { weekday: 'short' })
+                    .toUpperCase(),
+                date: currentDate.getDate().toString(),
+                month: currentDate
+                    .toLocaleDateString('en-US', { month: 'short' })
+                    .toUpperCase(),
+                fullDate: currentDate,
+            });
+        }
+
+        return dates;
+    };
+
+    const dates = generateDates(30);
+
+    async function handleCreateEvent() {
+        try {
+
+            const poojaName = poojas.find(item => item.id === selectedPooja)
+
+            const data = {
+                "event_type": "Pooja",
+                "event_name": poojaName?.name,
+                "event_date_time": formatDateTime(selectedDate, selectedSlot ?? ''),
+                "devotee_name": devoteeName,
+                "devotee_phone_number": devoteePhoneNumber,
+                "devotee_address": devoteeAddress,
+                "amount": Number(poojaName?.price.replace(/\D/g, '')),
+                "payment_status": "Pending"
+            }
+
+            console.log(data)
+
+            const response = await createEvent(data)
+
+            console.log(response)
+
+            showAlert("Success", "Event Added Successfully!!!")
+
+        } catch (err) {
+            showAlert("Error", "Failed in Create Event!!")
+        }
+    }
 
     return (
         <LinearGradient
@@ -151,32 +201,44 @@ export default function PoojaRegistrationScreen() {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ paddingHorizontal: 20 }}>
 
-                    {dates.map(item => (
+                    {dates.map((item, index) => (
                         <TouchableOpacity
-                            key={item.date}
-                            onPress={() => setSelectedDate(Number(item.date))}
+                            key={index}
+                            onPress={() => setSelectedDate(item.fullDate)}
                             style={[
                                 styles.dateItem,
-                                selectedDate === Number(item.date) &&
+                                selectedDate?.toDateString() === item.fullDate.toDateString() &&
                                 styles.selectedDateItem,
-                            ]}>
-
+                            ]}
+                        >
                             <Text
                                 style={[
                                     styles.dayText,
-                                    selectedDate === Number(item.date) &&
+                                    selectedDate?.toDateString() === item.fullDate.toDateString() &&
                                     styles.selectedDateText,
-                                ]}>
+                                ]}
+                            >
                                 {item.day}
                             </Text>
 
                             <Text
                                 style={[
                                     styles.dateNumber,
-                                    selectedDate === Number(item.date) &&
+                                    selectedDate?.toDateString() === item.fullDate.toDateString() &&
                                     styles.selectedDateText,
-                                ]}>
+                                ]}
+                            >
                                 {item.date}
+                            </Text>
+
+                            <Text
+                                style={[
+                                    styles.monthText,
+                                    selectedDate?.toDateString() === item.fullDate.toDateString() &&
+                                    styles.selectedDateText,
+                                ]}
+                            >
+                                {item.month}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -220,18 +282,24 @@ export default function PoojaRegistrationScreen() {
                     <TextInput
                         placeholder="Full Name"
                         style={styles.input}
+                        value={devoteeName}
+                        onChangeText={(value) => setDevoteeName(value)}
                     />
 
                     <TextInput
                         placeholder="Mobile Number"
                         keyboardType="numeric"
                         style={styles.input}
+                        value={devoteePhoneNumber}
+                        onChangeText={(value) => setDevoteePhoneNumber(value)}
                     />
 
                     <TextInput
                         placeholder="Address"
                         multiline
                         style={[styles.input, { height: 100 }]}
+                        value={devoteeAddress}
+                        onChangeText={(value) => setDevoteeAddress(value)}
                     />
                 </View>
 
@@ -251,8 +319,8 @@ export default function PoojaRegistrationScreen() {
                         <Text style={styles.label}>Date</Text>
                         <Text style={styles.value}>
                             {
-                                dates.find(i => Number(i.date) === selectedDate)
-                                    ? `${dates.find(i => Number(i.date) === selectedDate)?.day}, ${dates.find(i => Number(i.date) === selectedDate)?.date}`
+                                dates.find(i => Number(i.date) === selectedDate.getDate())
+                                    ? `${dates.find(i => Number(i.date) === selectedDate.getDate())?.day}, ${dates.find(i => Number(i.date) === selectedDate.getDate())?.date}`
                                     : '-'
                             }
                         </Text>
@@ -277,7 +345,7 @@ export default function PoojaRegistrationScreen() {
                         </Text>
                     </View>
 
-                    <TouchableOpacity style={styles.registerButton}>
+                    <TouchableOpacity style={styles.registerButton} onPress={() => handleCreateEvent()}>
                         <Text style={styles.registerText}>
                             Register Pooja
                         </Text>
@@ -361,6 +429,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 3,
+    },
+
+    monthText: {
+        fontSize: 11,
+        color: '#888',
+        marginTop: 2,
+        fontWeight: '500',
     },
 
     selectedDateItem: {
