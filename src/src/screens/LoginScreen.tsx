@@ -9,6 +9,10 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import { handleLogin } from '../services/service';
+import * as Keychain from 'react-native-keychain';
+import { showAlert } from '../utils/AlertUtils';
+import { validateField } from '../utils/helper';
+import { scheduleRefresh } from '../utils/refreshTokenHelper';
 
 export default function LoginScreen() {
 
@@ -18,7 +22,28 @@ export default function LoginScreen() {
 
   async function handleSubmit() {
     try {
+      const phoneNumberError = validateField(phoneNumber, 'phone');
+      if(!!phoneNumberError) {
+        showAlert('Error', phoneNumberError)
+        return
+      }
+      const passwordError = validateField(password, 'password');
+      if(!!passwordError) {
+        showAlert('Error', passwordError)
+        return
+      }
       const response = await handleLogin(phoneNumber, password)
+      await Keychain.setGenericPassword('user', response.data.accessToken, { service: 'accessToken' });
+      await Keychain.setGenericPassword('user', response.data.refreshToken, { service: 'refreshToken' });
+
+      scheduleRefresh(response.data.accessToken);
+
+      console.log('Access Token:', await Keychain.getGenericPassword({ service: 'accessToken' }));
+
+      showAlert('Success', 'Login successful!');
+
+      setPhoneNumber('')
+      setPassword('')
     } catch (error) {
       console.error(error)
     }

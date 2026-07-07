@@ -37,14 +37,14 @@ function App() {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       {/* <AppContent /> */}
       {/* <StartScreen /> */}
-      {/* <LoginScreen /> */}
+      <LoginScreen />
       {/* <HomeScreen /> */}
       {/* <CommitteeMemberScreen /> */}
       {/* <PoojaRegistrationScreen /> */}
       {/* <FestivalDashboardScreen /> */}
       {/* <FestivalDetailScreen /> */}
       {/* <MemberContributionScreen /> */}
-      <CollectContributionScreen />
+      {/* <CollectContributionScreen /> */}
       {/* <DonationCollectionScreen /> */}
       {/* <DonationDashboardScreen /> */}
       {/* <DonationSchemeDetailScreen /> */}

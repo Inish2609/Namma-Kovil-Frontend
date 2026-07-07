@@ -1,15 +1,37 @@
-import axios from "axios";
+// const api = axios.create({
+//     baseURL: 'http://10.0.2.2:5000',
+//     //   headers: {
+//     //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+//     //   }
+//     headers: {
+//         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgzMTY5ODgzLCJleHAiOjE3ODMxNzM0ODN9.FUShhj-ymznJ0C3r0ovizDf_6P3ur4WDC_SW2uZbY1Y`
+//     }
+// });
+
+import axios from 'axios';
+import * as Keychain from 'react-native-keychain';
 import { showApiError } from "../utils/AlertUtils";
 
 const api = axios.create({
     baseURL: 'http://10.0.2.2:5000',
-    //   headers: {
-    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-    //   }
-    headers: {
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgzMTY5ODgzLCJleHAiOjE3ODMxNzM0ODN9.FUShhj-ymznJ0C3r0ovizDf_6P3ur4WDC_SW2uZbY1Y`
-    }
 });
+
+api.interceptors.request.use(
+    async (config) => {
+        const credentials = await Keychain.getGenericPassword({
+            service: 'accessToken',
+        });
+
+        const token = credentials ? credentials.password : null;
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
 
 //Login Api
 export async function handleLogin(phoneNumber: string, password: string) {
@@ -23,6 +45,20 @@ export async function handleLogin(phoneNumber: string, password: string) {
         return response
     } catch (err: any) {
         showApiError(err, 'Login Failed !!!')
+        throw err
+    }
+}
+
+//Refresh Token Api
+export async function handleRefreshToken(refreshToken: string) {
+    try {
+        const response = await api.post('http://10.0.2.2:5000/api/users/refresh-token', {
+            refreshToken: refreshToken
+        });
+        return response;
+    } catch (err: any) {
+        // showApiError(err, 'Token Refresh Failed !!!')
+        console.error('Token Refresh Failed', err);
         throw err
     }
 }

@@ -22,3 +22,91 @@ export const formatDateTime = (date: Date, time: string) => {
 
     return `${year}-${month}-${day} ${hh}:${mm}:${ss}`;
 };
+
+
+export function isValidValue(value: any): boolean {
+    return value !== null && value !== undefined && value !== '';
+}
+
+export type ValidationType =
+    | "required"
+    | "email"
+    | "phone"
+    | "number"
+    | "text"
+    | "password";
+
+interface ValidationOptions {
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+    regex?: RegExp;
+}
+
+export const validateField = (
+    value: any,
+    type: ValidationType,
+    options?: ValidationOptions
+): string => {
+    const val = String(value ?? "").trim();
+
+    switch (type) {
+        case "required":
+            if (!val) return "This field is required";
+            break;
+
+        case "email":
+            if (!val) return "Email is required";
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val))
+                return "Invalid email address";
+            break;
+
+        case "phone":
+            if (!val) return "Phone number is required";
+            if (!/^[6-9]\d{9}$/.test(val))
+                return "Invalid phone number";
+            break;
+
+        case "number":
+            if (!val) return "Number is required";
+            if (isNaN(Number(val)))
+                return "Only numbers are allowed";
+            break;
+
+        case "password":
+            if (!val) return "Password is required";
+            if (val.length < 8)
+                return "Password must contain at least 8 characters";
+            break;
+
+        case "text":
+            if (!val) return "This field is required";
+            break;
+    }
+
+    if (options?.minLength && val.length < options.minLength)
+        return `Minimum ${options.minLength} characters required`;
+
+    if (options?.maxLength && val.length > options.maxLength)
+        return `Maximum ${options.maxLength} characters allowed`;
+
+    if (
+        options?.min !== undefined &&
+        !isNaN(Number(val)) &&
+        Number(val) < options.min
+    )
+        return `Minimum value is ${options.min}`;
+
+    if (
+        options?.max !== undefined &&
+        !isNaN(Number(val)) &&
+        Number(val) > options.max
+    )
+        return `Maximum value is ${options.max}`;
+
+    if (options?.regex && !options.regex.test(val))
+        return "Invalid format";
+
+    return "";
+};
