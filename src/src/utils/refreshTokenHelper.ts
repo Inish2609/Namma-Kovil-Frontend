@@ -32,6 +32,8 @@ export const scheduleRefresh = (accessToken: string) => {
         return;
       }
 
+      console.log("Refresh TOken is Trigerring")
+
       const response = await handleRefreshToken(credentials.password);
 
       const newAccessToken = response.data.accessToken;

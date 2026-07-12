@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -10,67 +10,74 @@ import {
 import { Dropdown } from 'react-native-element-dropdown';
 import LinearGradient from 'react-native-linear-gradient';
 import { showAlert, showApiError } from '../utils/AlertUtils';
-import { createFestivalContribution } from '../services/service';
+import {
+  createFestivalContribution,
+  getAllFestivals,
+  getAllUsers,
+  getUserFestivalContributionSummaryByUserIdAndFestivalId,
+  updateFestivalPayment,
+} from '../services/service';
+import { isValidValue, validateField } from '../utils/helper';
 
-const users = [
-  { id: 1, name: 'Inish Raj' },
-  { id: 2, name: 'Kumar' },
-  { id: 3, name: 'Ganesh' },
-  { id: 4, name: 'Arun' },
-];
+// const users = [
+//   { id: 1, name: 'Inish Raj' },
+//   { id: 2, name: 'Kumar' },
+//   { id: 3, name: 'Ganesh' },
+//   { id: 4, name: 'Arun' },
+// ];
 
-const festivals = [
-  {
-    id: 1,
-    name: 'Aadi Festival',
-    amountPerUser: 1000,
-  },
-  {
-    id: 2,
-    name: 'Panguni Festival',
-    amountPerUser: 1500,
-  },
-  {
-    id: 3,
-    name: 'Vinayagar Festival',
-    amountPerUser: 2000,
-  },
-];
+// const festivals = [
+//   {
+//     id: 1,
+//     name: 'Aadi Festival',
+//     amountPerUser: 1000,
+//   },
+//   {
+//     id: 2,
+//     name: 'Panguni Festival',
+//     amountPerUser: 1500,
+//   },
+//   {
+//     id: 3,
+//     name: 'Vinayagar Festival',
+//     amountPerUser: 2000,
+//   },
+// ];
 
-const payments = [
-  {
-    userId: 1,
-    festivalId: 1,
-    paidAmount: 500,
-  },
-  {
-    userId: 1,
-    festivalId: 2,
-    paidAmount: 1000,
-  },
-  {
-    userId: 2,
-    festivalId: 1,
-    paidAmount: 1000,
-  },
-];
+// const payments = [
+//   {
+//     userId: 1,
+//     festivalId: 1,
+//     paidAmount: 500,
+//   },
+//   {
+//     userId: 1,
+//     festivalId: 2,
+//     paidAmount: 1000,
+//   },
+//   {
+//     userId: 2,
+//     festivalId: 1,
+//     paidAmount: 1000,
+//   },
+// ];
 
 export default function CollectContributionScreen() {
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [isUserFocus, setIsUserFocus] = useState(false);
 
-  const userList = users.map(item => ({
-    label: item.name,
-    value: item.id,
-  }));
+  // const userList = users.map(item => ({
+  //   label: item.name,
+  //   value: item.id,
+  // }));
 
   const [selectedFestival, setSelectedFestival] = useState<number | null>(null);
   const [isFestivalFocus, setIsFestivalFocus] = useState(false);
 
-  const festivalList = festivals.map(item => ({
-    label: item.name,
-    value: item.id,
-  }));
+  // const festivalList = festivals.map(item => ({
+  //   label: item.name,
+  //   value: item.id,
+  // }));
 
   const [amount, setAmount] = useState('');
 
@@ -78,60 +85,181 @@ export default function CollectContributionScreen() {
 
   const [remarks, setRemarks] = useState('');
 
-  const [paymentMethod, setPaymentMethod] =
-    useState('Cash');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
 
-  const summary = useMemo(() => {
-    if (!selectedUser || !selectedFestival) {
-      return {
-        required: 0,
-        paid: 0,
-        pending: 0,
-        progress: 0,
-      };
+  const [userFestivalContributionSummary, setUserFestivalContributionSummary] =
+    useState<{
+      user_id: number;
+      name: string;
+      festival_id: number;
+      festival_name: string;
+      required_amount: number;
+      paid_amount: number;
+      pending_amount: number;
+      progress_percentage: number | string;
+    }>();
+
+    const [reset, setReset] = useState(false)
+
+  // const summary = useMemo(() => {
+  //   if (!selectedUser || !selectedFestival) {
+  //     return {
+  //       required: 0,
+  //       paid: 0,
+  //       pending: 0,
+  //       progress: 0,
+  //     };
+  //   }
+
+  //   const festival = festivals.find(x => x.id === selectedFestival);
+
+  //   const payment = payments.find(
+  //     x => x.userId === selectedUser && x.festivalId === selectedFestival,
+  //   );
+
+  //   const required = festival?.amountPerUser || 0;
+
+  //   const paid = payment?.paidAmount || 0;
+
+  //   const pending = required - paid;
+
+  //   return {
+  //     required,
+  //     paid,
+  //     pending,
+  //     progress: required === 0 ? 0 : (paid / required) * 100,
+  //   };
+  // }, [selectedUser, selectedFestival]);
+
+  // console.log(selectedUser);
+
+  const [userOptions, setUserOptions] = useState<
+    {
+      label: string | number;
+      value: number | string;
+    }[]
+  >([]);
+
+  const [festivalOptions, setFestivalOptions] = useState<
+    {
+      label: string | number;
+      value: number | string;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    handleGetAllUsers();
+    handleGetAllFestivals();
+  }, [reset]);
+
+  useEffect(() => {
+    if (isValidValue(selectedFestival) && isValidValue(selectedUser)) {
+      handleGetUserFestivalContributionSummary();
     }
+  }, [selectedFestival, selectedUser]);
 
-    const festival = festivals.find(
-      x => x.id === selectedFestival,
-    );
+  async function handleGetAllUsers() {
+    try {
+      const response = await getAllUsers();
+      setUserOptions(response.data.value ?? []);
+    } catch (err) {
+      console.log('Get All Users Failed!!');
+      showAlert('Error', 'Get All Users Failed!!');
+    }
+  }
 
-    const payment = payments.find(
-      x =>
-        x.userId === selectedUser &&
-        x.festivalId === selectedFestival,
-    );
+  async function handleGetAllFestivals() {
+    try {
+      const response = await getAllFestivals();
+      setFestivalOptions(response.data.value ?? []);
+    } catch (err) {
+      console.log('Get All Festivals Failed');
+      showAlert('Error', 'Get All Festivals Failed');
+    }
+  }
 
-    const required =
-      festival?.amountPerUser || 0;
-
-    const paid = payment?.paidAmount || 0;
-
-    const pending = required - paid;
-
-    return {
-      required,
-      paid,
-      pending,
-      progress:
-        required === 0
-          ? 0
-          : (paid / required) * 100,
-    };
-  }, [selectedUser, selectedFestival]);
-
-  console.log(selectedUser)
+  async function handleGetUserFestivalContributionSummary() {
+    try {
+      const response =
+        await getUserFestivalContributionSummaryByUserIdAndFestivalId(
+          selectedUser,
+          selectedFestival,
+        );
+      setUserFestivalContributionSummary(response.data.value ?? {});
+    } catch (err) {
+      console.log('Get User Festival Contribution Failed!!');
+      showAlert('Error', 'Get User Festival Contribution Failed!!');
+    }
+  }
 
   async function handleCollectContribution() {
     try {
-      const data = {
-        "user_id": 1,
-        "festival_id": 1,
-        "amount_paid": 500,
-        "payment_status": "pending"
+      const userValidations = validateField(selectedUser, 'required');
+      if (userValidations) {
+        showAlert('Error', userValidations);
+        return;
       }
-      const response = await createFestivalContribution(data);8
 
-      showAlert("Success",'Contribution collected successfully!');
+      const festivalValidations = validateField(selectedFestival, 'required');
+      if (festivalValidations) {
+        showAlert('Error', festivalValidations);
+        return;
+      }
+
+      const amountValidations = validateField(amount, 'number');
+      if (amountValidations) {
+        showAlert('Error', amountValidations);
+        return;
+      }
+
+      if (Number(amount) <= 0) {
+        showAlert('Error', 'Amount Cannot Should be More than 0!!');
+        return;
+      }
+
+      if (
+        Number(amount) > Number(userFestivalContributionSummary?.pending_amount)
+      ) {
+        showAlert(
+          'Error',
+          `Amount Cannot be More than Pending amount : ${Number(
+            userFestivalContributionSummary?.pending_amount,
+          )}`,
+        );
+        return;
+      }
+
+      const data = {
+        user_id: Number(selectedUser),
+        festival_id: Number(selectedFestival),
+        amount_paid: Number(amount),
+        payment_status:
+          userFestivalContributionSummary?.required_amount ===
+          Number(userFestivalContributionSummary?.paid_amount) + Number(amount)
+            ? 'completed'
+            : 'pending',
+      };
+
+      if (Number(userFestivalContributionSummary?.paid_amount) === 0) {
+        const response = await createFestivalContribution(data);
+      } else {
+        const response = await updateFestivalPayment(data);
+      }
+
+      showAlert('Success', 'Contribution collected successfully!');
+
+      setAmount('')
+      setFestivalOptions([])
+      setIsFestivalFocus(false)
+      setIsUserFocus(false)
+      setPaymentMethod('Cash')
+      setReference('')
+      setRemarks('')
+      setSelectedFestival(null)
+      setSelectedUser(null)
+      setUserFestivalContributionSummary(undefined)
+      setUserOptions([])
+      setReset(!reset)
     } catch (error) {
       console.error('Error collecting contribution:', error);
       showApiError(error, 'Contribution Collection Failed!!');
@@ -140,38 +268,23 @@ export default function CollectContributionScreen() {
 
   return (
     <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <LinearGradient colors={['#F59E47', '#F7B267']} style={styles.header}>
+          <Text style={styles.headerTitle}>Collect Contribution</Text>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}>
-
-        <LinearGradient
-          colors={['#F59E47', '#F7B267']}
-          style={styles.header}>
-
-          <Text style={styles.headerTitle}>
-            Collect Contribution
-          </Text>
-
-          <Text style={styles.headerSubtitle}>
-            Temple Committee
-          </Text>
-
+          <Text style={styles.headerSubtitle}>Temple Committee</Text>
         </LinearGradient>
 
         <View style={styles.formCard}>
-
           <Text style={styles.label}>Member</Text>
 
           <Dropdown
-            style={[
-              styles.dropdown,
-              isUserFocus && styles.dropdownFocus,
-            ]}
+            style={[styles.dropdown, isUserFocus && styles.dropdownFocus]}
             placeholderStyle={styles.placeholderStyle}
             selectedTextStyle={styles.selectedTextStyle}
             inputSearchStyle={styles.inputSearchStyle}
             iconStyle={styles.iconStyle}
-            data={userList}
+            data={userOptions}
             search
             maxHeight={350}
             labelField="label"
@@ -187,21 +300,15 @@ export default function CollectContributionScreen() {
             }}
           />
 
-          <Text style={styles.label}>
-            Festival
-          </Text>
-
+          <Text style={styles.label}>Festival</Text>
 
           <Dropdown
-            style={[
-              styles.dropdown,
-              isFestivalFocus && styles.dropdownFocus,
-            ]}
+            style={[styles.dropdown, isFestivalFocus && styles.dropdownFocus]}
             placeholderStyle={styles.placeholderStyle}
             selectedTextStyle={styles.selectedTextStyle}
             inputSearchStyle={styles.inputSearchStyle}
             iconStyle={styles.iconStyle}
-            data={festivalList}
+            data={festivalOptions}
             search
             maxHeight={350}
             labelField="label"
@@ -217,67 +324,51 @@ export default function CollectContributionScreen() {
             }}
           />
 
-
           <View style={styles.summaryCard}>
-
-            <Text style={styles.summaryTitle}>
-              Contribution Summary
-            </Text>
+            <Text style={styles.summaryTitle}>Contribution Summary</Text>
 
             <View style={styles.row}>
-
               <Text>Required</Text>
 
               <Text>
-                ₹{summary.required}
+                ₹{userFestivalContributionSummary?.required_amount ?? 0}
               </Text>
-
             </View>
 
             <View style={styles.row}>
-
               <Text>Already Paid</Text>
 
-              <Text>
-                ₹{summary.paid}
-              </Text>
-
+              <Text>₹{userFestivalContributionSummary?.paid_amount ?? 0}</Text>
             </View>
 
             <View style={styles.row}>
-
               <Text>Pending</Text>
 
               <Text
                 style={{
                   color: '#E53935',
                   fontWeight: '700',
-                }}>
-
-                ₹{summary.pending}
-
+                }}
+              >
+                ₹{userFestivalContributionSummary?.pending_amount ?? 0}
               </Text>
-
             </View>
 
             <View style={styles.progress}>
-
               <View
                 style={[
                   styles.progressFill,
                   {
-                    width: `${summary.progress}%`,
+                    width: `${Number(
+                      userFestivalContributionSummary?.progress_percentage ?? 0,
+                    )}%`,
                   },
                 ]}
               />
-
             </View>
-
           </View>
 
-          <Text style={styles.label}>
-            Collect Amount
-          </Text>
+          <Text style={styles.label}>Collect Amount</Text>
 
           <TextInput
             placeholder="Enter Amount"
@@ -287,49 +378,33 @@ export default function CollectContributionScreen() {
             style={styles.input}
           />
 
-          <Text style={styles.label}>
-            Payment Method
-          </Text>
+          <Text style={styles.label}>Payment Method</Text>
 
           <View style={styles.methodContainer}>
-
-            {['Cash', 'UPI', 'Bank'].map(
-              item => (
-                <TouchableOpacity
-                  key={item}
-                  onPress={() =>
-                    setPaymentMethod(item)
-                  }
-                  style={[
-                    styles.methodButton,
-                    paymentMethod === item && {
-                      backgroundColor:
-                        '#F59E47',
-                    },
-                  ]}>
-
-                  <Text
-                    style={{
-                      color:
-                        paymentMethod === item
-                          ? '#fff'
-                          : '#3D2C29',
-                      fontWeight: '700',
-                    }}>
-
-                    {item}
-
-                  </Text>
-
-                </TouchableOpacity>
-              ),
-            )}
-
+            {['Cash', 'UPI', 'Bank'].map(item => (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setPaymentMethod(item)}
+                style={[
+                  styles.methodButton,
+                  paymentMethod === item && {
+                    backgroundColor: '#F59E47',
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: paymentMethod === item ? '#fff' : '#3D2C29',
+                    fontWeight: '700',
+                  }}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <Text style={styles.label}>
-            Reference Number
-          </Text>
+          <Text style={styles.label}>Reference Number</Text>
 
           <TextInput
             placeholder="Enter Reference Number"
@@ -338,9 +413,7 @@ export default function CollectContributionScreen() {
             style={styles.input}
           />
 
-          <Text style={styles.label}>
-            Remarks
-          </Text>
+          <Text style={styles.label}>Remarks</Text>
 
           <TextInput
             multiline
@@ -352,23 +425,15 @@ export default function CollectContributionScreen() {
           />
 
           <TouchableOpacity onPress={handleCollectContribution}>
-
             <LinearGradient
               colors={['#F59E47', '#F7B267']}
-              style={styles.button}>
-
-              <Text style={styles.buttonText}>
-                Collect Contribution
-              </Text>
-
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>Collect Contribution</Text>
             </LinearGradient>
-
           </TouchableOpacity>
-
         </View>
-
       </ScrollView>
-
     </View>
   );
 }
@@ -429,8 +494,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 18,
   },
-
-
 
   dropdown: {
     height: 58,

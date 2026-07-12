@@ -11,56 +11,56 @@ import LinearGradient from 'react-native-linear-gradient';
 import { showAlert } from '../utils/AlertUtils';
 import { createUser } from '../services/service';
 
+const designations = [
+  'President',
+  'Secretary',
+  'Treasurer',
+  'Vice President',
+  'Committee Member',
+];
+
 export default function CreateUserScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Member');
-  const [fatherName, setFatherName] = useState('')
+  const [fatherName, setFatherName] = useState('');
 
+  const [designation, setDesignation] = useState('');
 
   const handleCreateUser = async () => {
     try {
       const data = {
-        "name": name,
-        "phone": phone,
-        "father_name": fatherName,
-        "address": address,
-        "email": email,
-        "role": role,
-        "isAdmin": false
-      }
-      const response = await createUser(data)
+        name: name,
+        phone: phone,
+        father_name: fatherName,
+        address: address,
+        email: email,
+        role: role,
+        isAdmin: false,
+        designation: designation,
+      };
+      const response = await createUser(data);
 
-      showAlert('Success', response.data.message)
+      showAlert('Success', response.data.message);
     } catch (err) {
-      showAlert('Error', "User Creation Failed!!")
+      showAlert('Error', 'User Creation Failed!!');
     }
   };
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* HEADER */}
-        <LinearGradient
-          colors={['#F59E47', '#F7B267']}
-          style={styles.header}>
+        <LinearGradient colors={['#F59E47', '#F7B267']} style={styles.header}>
+          <Text style={styles.headerTitle}>Create User</Text>
 
-          <Text style={styles.headerTitle}>
-            Create User
-          </Text>
-
-          <Text style={styles.headerSubtitle}>
-            Add new member to system
-          </Text>
-
+          <Text style={styles.headerSubtitle}>Add new member to system</Text>
         </LinearGradient>
 
         {/* FORM CARD */}
         <View style={styles.card}>
-
           {/* Name */}
           <Text style={styles.label}>Full Name</Text>
           <TextInput
@@ -112,46 +112,62 @@ export default function CreateUserScreen() {
           <Text style={styles.label}>Role</Text>
 
           <View style={styles.roleContainer}>
-
             {['Member', 'Committee'].map(item => (
               <TouchableOpacity
                 key={item}
                 onPress={() => setRole(item)}
-                style={[
-                  styles.roleButton,
-                  role === item && styles.roleActive,
-                ]}>
-
+                style={[styles.roleButton, role === item && styles.roleActive]}
+              >
                 <Text
                   style={[
                     styles.roleText,
                     role === item && styles.roleTextActive,
-                  ]}>
-
+                  ]}
+                >
                   {item}
-
                 </Text>
-
               </TouchableOpacity>
             ))}
-
           </View>
+
+          {role === 'Committee' && (
+            <>
+              <Text style={styles.label}>Designation</Text>
+
+              <View style={styles.roleContainer}>
+                {designations.map(item => (
+                  <TouchableOpacity
+                    key={item}
+                    onPress={() => setDesignation(item)}
+                    style={[
+                      styles.roleButton,
+                      designation === item && styles.roleActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.roleText,
+                        designation === item && styles.roleTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {/* CREATE BUTTON */}
           <TouchableOpacity onPress={handleCreateUser}>
             <LinearGradient
               colors={['#F59E47', '#F7B267']}
-              style={styles.button}>
-
-              <Text style={styles.buttonText}>
-                Create User
-              </Text>
-
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>Create User</Text>
             </LinearGradient>
           </TouchableOpacity>
-
         </View>
-
       </ScrollView>
     </View>
   );

@@ -110,3 +110,39 @@ export const validateField = (
 
     return "";
 };
+
+export const formatTime = (dateString: string): string => {
+    const date = new Date(dateString);
+
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+};
+
+export const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+
+    return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+    });
+};
+
+export const convertTo24Hour = (time: string): string => {
+    const [timePart, modifier] = time.split(" ");
+    let [hours, minutes] = timePart.split(":").map(Number);
+
+    if (modifier === "PM" && hours !== 12) {
+        hours += 12;
+    }
+
+    if (modifier === "AM" && hours === 12) {
+        hours = 0;
+    }
+
+    return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:00`;
+};

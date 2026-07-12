@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -9,137 +9,168 @@ import {
   ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { showAlert } from '../utils/AlertUtils';
+import {
+  getAllUsersTotalPendingAmountDetails,
+  getFestivalDashboardDetails,
+} from '../services/service';
 
-const festivals = [
-  {
-    id: 1,
-    name: 'Aadi Festival',
-    amountPerUser: 1000,
-  },
-  {
-    id: 2,
-    name: 'Panguni Uthiram',
-    amountPerUser: 1500,
-  },
-  {
-    id: 3,
-    name: 'Vinayagar Chaturthi',
-    amountPerUser: 2000,
-  },
-];
+// const festivals = [
+//   {
+//     id: 1,
+//     name: 'Aadi Festival',
+//     amountPerUser: 1000,
+//   },
+//   {
+//     id: 2,
+//     name: 'Panguni Uthiram',
+//     amountPerUser: 1500,
+//   },
+//   {
+//     id: 3,
+//     name: 'Vinayagar Chaturthi',
+//     amountPerUser: 2000,
+//   },
+// ];
 
-const users = [
-  {
-    id: 1,
-    name: 'Inish Raj',
-  },
-  {
-    id: 2,
-    name: 'Kumar',
-  },
-  {
-    id: 3,
-    name: 'Ganesh',
-  },
-  {
-    id: 4,
-    name: 'Suresh',
-  },
-];
+// const users = [
+//   {
+//     id: 1,
+//     name: 'Inish Raj',
+//   },
+//   {
+//     id: 2,
+//     name: 'Kumar',
+//   },
+//   {
+//     id: 3,
+//     name: 'Ganesh',
+//   },
+//   {
+//     id: 4,
+//     name: 'Suresh',
+//   },
+// ];
 
-const payments = [
-  {
-    userId: 1,
-    festivalId: 1,
-    paidAmount: 1000,
-  },
-  {
-    userId: 1,
-    festivalId: 2,
-    paidAmount: 1000,
-  },
-  {
-    userId: 2,
-    festivalId: 1,
-    paidAmount: 500,
-  },
-  {
-    userId: 3,
-    festivalId: 3,
-    paidAmount: 2000,
-  },
-];
+// const payments = [
+//   {
+//     userId: 1,
+//     festivalId: 1,
+//     paidAmount: 1000,
+//   },
+//   {
+//     userId: 1,
+//     festivalId: 2,
+//     paidAmount: 1000,
+//   },
+//   {
+//     userId: 2,
+//     festivalId: 1,
+//     paidAmount: 500,
+//   },
+//   {
+//     userId: 3,
+//     festivalId: 3,
+//     paidAmount: 2000,
+//   },
+// ];
 
-const FestivalDashboardScreen = ({navigation}: any) => {
+const FestivalDashboardScreen = ({ navigation }: any) => {
+  // const getUserPending = (userId: number) => {
+  //   const assignedAmount = festivals.reduce(
+  //     (sum, item) => sum + item.amountPerUser,
+  //     0,
+  //   );
+
+  //   const paidAmount = payments
+  //     .filter(item => item.userId === userId)
+  //     .reduce((sum, item) => sum + item.paidAmount, 0);
+
+  //   return assignedAmount - paidAmount;
+  // };
+
+  const [festivalDetails, setFestivalDetails] = useState<
+    {
+      id: number;
+      festival_name: string;
+      target_amount: number;
+      collected_amount: string | number;
+      pending_amount: string | number;
+      percentage: number;
+    }[]
+  >([]);
+
+  const [userAmountDetails, setUserAmountDetails] = useState<
+    {
+      id: number;
+      name: string;
+      assigned_amount: string | number;
+      paid_amount: string | number;
+      pending_amount: string | number;
+    }[]
+  >([]);
+
   const [search, setSearch] = useState('');
 
   const filteredUsers = useMemo(() => {
-    return users.filter(item =>
-      item.name
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+    return userAmountDetails.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase()),
     );
-  }, [search]);
+  }, [search, userAmountDetails]);
 
-  const getUserPending = (userId: number) => {
-    const assignedAmount = festivals.reduce(
-      (sum, item) => sum + item.amountPerUser,
-      0,
-    );
+  useEffect(() => {
+    handleGetFestivalDashboardDetails();
+    handleGetAllUsersTotalPendingAmountDetails();
+  }, []);
 
-    const paidAmount = payments
-      .filter(item => item.userId === userId)
-      .reduce(
-        (sum, item) => sum + item.paidAmount,
-        0,
-      );
+  async function handleGetFestivalDashboardDetails() {
+    try {
+      const response = await getFestivalDashboardDetails();
+      setFestivalDetails(response.data.value ?? []);
+    } catch (err) {
+      console.log('Get Festival Dashboard details Failed!!');
+      showAlert('Error', 'Get Festival Dashboard details Failed!!');
+    }
+  }
 
-    return assignedAmount - paidAmount;
-  };
+  async function handleGetAllUsersTotalPendingAmountDetails() {
+    try {
+      const response = await getAllUsersTotalPendingAmountDetails();
+      setUserAmountDetails(response.data.value ?? []);
+    } catch (err) {
+      console.log('Get All Users Total Pending Amount Details Failed!!');
+      showAlert('Error', 'Get All Users Total Pending Amount Details Failed!!');
+    }
+  }
 
   const renderFestivalCard = ({
     item,
   }: {
-    item: (typeof festivals)[0];
+    item: (typeof festivalDetails)[0];
   }) => {
-    const targetAmount =
-      item.amountPerUser * users.length;
+    // const targetAmount = item.amountPerUser * users.length;
 
-    const collectedAmount = payments
-      .filter(
-        payment =>
-          payment.festivalId === item.id,
-      )
-      .reduce(
-        (sum, payment) =>
-          sum + payment.paidAmount,
-        0,
-      );
+    // const collectedAmount = payments
+    //   .filter(payment => payment.festivalId === item.id)
+    //   .reduce((sum, payment) => sum + payment.paidAmount, 0);
 
-    const progress =
-      (collectedAmount / targetAmount) *
-      100;
+    // const progress = (collectedAmount / targetAmount) * 100;
 
     return (
       <TouchableOpacity
         activeOpacity={0.9}
         style={styles.festivalCard}
         onPress={() =>
-          navigation.navigate(
-            'FestivalDetail',
-            {
-              festival: item,
-            },
-          )
-        }>
-        <Text style={styles.festivalName}>
-          {item.name}
-        </Text>
+          navigation.navigate('FestivalDetail', {
+            festival_id: item.id,
+          })
+        }
+      >
+        <Text style={styles.festivalName}>{item.festival_name}</Text>
 
         <Text style={styles.amountText}>
-          ₹{collectedAmount.toLocaleString()}
-          {' / '}
-          ₹{targetAmount.toLocaleString()}
+          ₹{item.collected_amount.toLocaleString()}
+          {' / '}₹{item.target_amount.toLocaleString()}
         </Text>
 
         <View style={styles.progressBar}>
@@ -147,94 +178,60 @@ const FestivalDashboardScreen = ({navigation}: any) => {
             style={[
               styles.progressFill,
               {
-                width: `${progress}%`,
+                width: `${item.percentage ?? 0}%`,
               },
             ]}
           />
         </View>
 
         <Text style={styles.progressText}>
-          {progress.toFixed(0)}%
-          {' Collected'}
+          {(Number(item.percentage) ?? 0).toFixed(0)}%{' Collected'}
         </Text>
 
         <Text style={styles.pendingText}>
-          Pending ₹
-          {(
-            targetAmount -
-            collectedAmount
-          ).toLocaleString()}
+          Pending ₹{(item?.pending_amount).toLocaleString()}
         </Text>
       </TouchableOpacity>
     );
   };
 
-  const renderUser = ({
-    item,
-  }: {
-    item: (typeof users)[0];
-  }) => (
+  const renderUser = ({ item }: { item: (typeof userAmountDetails)[0] }) => (
     <TouchableOpacity
       style={styles.userCard}
       onPress={() =>
-        navigation.navigate(
-          'MemberContribution',
-          {
-            user: item,
-          },
-        )
-      }>
+        navigation.navigate('MemberContribution', {
+          user: item.id,
+        })
+      }
+    >
       <View>
-        <Text style={styles.userName}>
-          {item.name}
-        </Text>
+        <Text style={styles.userName}>{item.name}</Text>
 
-        <Text style={styles.userPending}>
-          Pending ₹
-          {getUserPending(
-            item.id,
-          ).toLocaleString()}
-        </Text>
+        <Text style={styles.userPending}>Pending ₹{item?.pending_amount}</Text>
       </View>
 
-      <Text style={styles.viewText}>
-        View →
-      </Text>
+      <Text style={styles.viewText}>View →</Text>
     </TouchableOpacity>
   );
 
   return (
     <LinearGradient
-      colors={[
-        '#FFF8F3',
-        '#FDEFE5',
-        '#FFF5EE',
-      ]}
-      style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={
-          false
-        }>
-        <Text style={styles.header}>
-          Festival Dashboard
-        </Text>
+      colors={['#FFF8F3', '#FDEFE5', '#FFF5EE']}
+      style={styles.container}
+    >
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={styles.header}>Festival Dashboard</Text>
 
         {/* Festivals */}
 
-        <Text style={styles.sectionTitle}>
-          Festival Collections
-        </Text>
+        <Text style={styles.sectionTitle}>Festival Collections</Text>
 
         <FlatList
           horizontal
-          data={festivals}
+          data={festivalDetails}
           renderItem={renderFestivalCard}
-          keyExtractor={item =>
-            item.id.toString()
-          }
-          showsHorizontalScrollIndicator={
-            false
-          }
+          keyExtractor={item => item.id.toString()}
+          showsHorizontalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 20,
           }}
@@ -242,9 +239,7 @@ const FestivalDashboardScreen = ({navigation}: any) => {
 
         {/* Search */}
 
-        <Text style={styles.sectionTitle}>
-          Search Member
-        </Text>
+        <Text style={styles.sectionTitle}>Search Member</Text>
 
         <TextInput
           placeholder="Search member..."
@@ -255,16 +250,12 @@ const FestivalDashboardScreen = ({navigation}: any) => {
 
         {/* Members */}
 
-        <Text style={styles.sectionTitle}>
-          Members
-        </Text>
+        <Text style={styles.sectionTitle}>Members</Text>
 
         <FlatList
           data={filteredUsers}
           renderItem={renderUser}
-          keyExtractor={item =>
-            item.id.toString()
-          }
+          keyExtractor={item => item.id.toString()}
           scrollEnabled={false}
         />
       </ScrollView>

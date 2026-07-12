@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -8,50 +8,148 @@ import {
     FlatList,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { getEventsByDate, getUpcomingFestivals } from '../services/service';
+import { formatDate, formatTime } from '../utils/helper';
+import { showAlert } from '../utils/AlertUtils';
 
-const upcomingEvents = [
-    {
-        id: '1',
-        title: 'Aadi Festival',
-        date: '12 Aug',
-        image: require('../assets/images/image-2.jpeg'),
-    },
-    {
-        id: '2',
-        title: 'Special Abishegam',
-        date: '18 Aug',
-        image: require('../assets/images/image-2.jpeg'),
-    },
-    {
-        id: '3',
-        title: 'Maha Shivaratri',
-        date: '25 Aug',
-        image: require('../assets/images/image-2.jpeg'),
-    },
-];
+// const upcomingEvents = [
+//     {
+//         id: '1',
+//         title: 'Aadi Festival',
+//         date: '12 Aug',
+//         image: require('../assets/images/image-2.jpeg'),
+//     },
+//     {
+//         id: '2',
+//         title: 'Special Abishegam',
+//         date: '18 Aug',
+//         image: require('../assets/images/image-2.jpeg'),
+//     },
+//     {
+//         id: '3',
+//         title: 'Maha Shivaratri',
+//         date: '25 Aug',
+//         image: require('../assets/images/image-2.jpeg'),
+//     },
+// ];
 
-const todayEvents = [
-    {
-        id: '1',
-        title: 'Special Abishegam',
-        time: '06:00 AM',
-        description: 'Special pooja for devotees',
-    },
-    {
-        id: '2',
-        title: 'Ganapathy Homam',
-        time: '08:00 AM',
-        description: 'Homam for prosperity',
-    },
-    {
-        id: '3',
-        title: 'Annadhanam',
-        time: '12:00 PM',
-        description: 'Free food distribution',
-    },
-];
+// const todayEvents = [
+//     {
+//         id: '1',
+//         title: 'Special Abishegam',
+//         time: '06:00 AM',
+//         description: 'Special pooja for devotees',
+//     },
+//     {
+//         id: '2',
+//         title: 'Ganapathy Homam',
+//         time: '08:00 AM',
+//         description: 'Homam for prosperity',
+//     },
+//     {
+//         id: '3',
+//         title: 'Annadhanam',
+//         time: '12:00 PM',
+//         description: 'Free food distribution',
+//     },
+// ];
+
+
 
 export default function HomeScreen() {
+
+    const [todayEvents, setTodayEvents] = useState<{
+        id: string;
+        title: string;
+        time: string;
+        description: string;
+    }[]>([])
+
+    const [upcomingFestivals, setUpcomingFestivals] = useState<
+        {
+            id: string;
+            title: string;
+            date: string;
+            image: any;
+        }[]>([])
+
+    useEffect(() => {
+        handleGetTodayEvents();
+        handleGetUpcomingFestivals()
+    }, [])
+
+    async function handleGetTodayEvents() {
+        try {
+            const date = new Date();
+
+            const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
+                .toString()
+                .padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+
+            const response = await getEventsByDate(formattedDate);
+
+            const data = response.data.value; // or response.data.data depending on your API
+
+            if (!data || data.length === 0) {
+                setTodayEvents([
+                    {
+                        id: 'no-events',
+                        title: 'No Events Today',
+                        time: '',
+                        description: 'There are no scheduled events for today.',
+                    },
+                ]);
+                return;
+            }
+
+            const events = data.map((item: any) => ({
+                id: item?.id.toString(),
+                title: item?.event_name,
+                time: formatTime(item?.event_date_time),
+                description: item?.event_description ?? 'Please Come and Get the Amman Blessings',
+            }));
+
+            setTodayEvents(events);
+
+        } catch (err) {
+            console.log('Error fetching today events', err);
+            showAlert("Error", "Failed to fetch today's events. Please try again later.");
+        }
+    }
+
+    async function handleGetUpcomingFestivals() {
+        try {
+            const response = await getUpcomingFestivals()
+
+            const data = response.data.value;
+
+            if (!data || data.length === 0) {
+                setUpcomingFestivals([
+                    {
+                        id: 'no-festival',
+                        title: 'No Festival Scheduled',
+                        date: '',
+                        image: require('../assets/images/image-2.jpeg'),
+                    },
+                ]);
+                return;
+            }
+
+            const festivals = response.data.value?.map((item: any) => ({
+                id: item?.id.toString(),
+                title: item?.festival_name,
+                date: formatDate(item?.start_date),
+                image: require('../assets/images/image-2.jpeg'),
+            }))
+
+            setUpcomingFestivals(festivals)
+
+        } catch (err) {
+            console.log("Error Fetching Upcoming Festivals", err)
+            showAlert("Error", "Failed to Fetch Upcoming Festivals. Please try again later")
+        }
+    }
+
     return (
         <LinearGradient
             colors={['#FFF8F3', '#FDEFE5', '#FFF5EE']}
@@ -119,7 +217,7 @@ export default function HomeScreen() {
 
                 <FlatList
                     horizontal
-                    data={upcomingEvents}
+                    data={upcomingFestivals}
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={item => item.id}
                     contentContainerStyle={{ paddingLeft: 15 }}
